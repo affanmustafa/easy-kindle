@@ -1,236 +1,229 @@
-# Easy-Kindle: Project Specification
+# Easy-Kindle
 
-## Project Vision
+A command-line tool that converts web articles into EPUB files and sends them directly to your Kindle or e-reader via email.
 
-Easy-Kindle is a command-line tool that enables users to send web articles, documents, and books to their e-reader devices (Kindle, Kobo, Remarkable, etc.) via email. The tool automatically converts web content into optimized e-book formats and delivers them directly to the user's device.
+## Features
 
-## Core Features
+- **Web Content Extraction**: Automatically extracts clean, readable content from web pages using Mozilla Readability
+- **EPUB Generation**: Creates properly formatted EPUB files with metadata, table of contents, and embedded images
+- **Email Delivery**: Sends EPUBs directly to your Kindle/e-reader via SMTP
+- **Batch Processing**: Process multiple URLs at once from a text file
+- **Sync System**: Track and automatically process new URLs from a reading list file
+- **Author Extraction**: Preserves article authors in EPUB metadata
+- **Flexible Output**: Generate individual EPUBs or combine multiple articles into one book
 
-### 1. Input Processing
-
-**Supported Input Types:**
-
-- **Direct URLs**: Single web page links to be converted
-- **URL Collections**: Text files containing multiple URLs (one per line)
-- **Local Files**: Existing e-book files (EPUB, PDF, MOBI, AZW3, TXT)
-
-**Automatic Classification:**
-
-- Intelligently detect input type without explicit flags
-- Validate URLs for accessibility before processing
-- Check file existence and format compatibility
-
-### 2. Content Processing Pipeline
-
-**Web Content Extraction:**
-
-- Extract main content from web pages using readability algorithms
-- Remove advertisements, navigation elements, and clutter
-- Preserve article structure, headings, and formatting
-- Extract metadata (title, author, publication date)
-
-**Image Handling:**
-
-- Download and embed images locally in generated e-books
-- Optimize image size for e-ink displays
-- Handle relative image paths and convert to absolute URLs
-- Support various image formats (JPEG, PNG, GIF, WebP)
-
-**Text Processing:**
-
-- Clean and normalize HTML content
-- Preserve semantic structure (headings, paragraphs, lists)
-- Handle special characters and encoding issues
-- Generate table of contents for longer content
-
-### 3. E-Book Generation
-
-**EPUB Creation:**
-
-- Generate standards-compliant EPUB files
-- Include proper metadata (title, author, language)
-- Create table of contents and navigation
-- Embed fonts and styling for consistent appearance
-
-**File Organization:**
-
-- Generate meaningful filenames based on content title
-- Handle filename sanitization for cross-platform compatibility
-- Organize output files in user-specified directories
-- Support custom naming patterns
-
-### 4. Email Delivery
-
-**SMTP Integration:**
-
-- Send generated e-books via email to user's e-reader
-- Support multiple email providers (Gmail, Outlook, custom SMTP)
-- Handle authentication and secure connections
-- Support file attachments within email size limits
-
-**Configuration Management:**
-
-- Store email credentials securely
-- Save multiple e-reader email addresses
-- Configure SMTP settings for different providers
-- Support configuration profiles for different use cases
-
-### 5. User Experience
-
-**Command-Line Interface:**
-
-- Intuitive commands with clear help text
-- Progress indicators for long-running operations
-- Colored output for better readability
-- Comprehensive error messages with suggestions
-
-**Operation Modes:**
-
-- **Send Mode**: Process and immediately send to e-reader
-- **Download Mode**: Process and save locally without sending
-- **Batch Mode**: Process multiple inputs simultaneously
-
-## Technical Requirements
-
-### Performance
-
-- Handle large documents and collections efficiently
-- Parallel processing for multiple URLs/images
-- Minimal memory usage during processing
-- Fast startup and response times
-
-### Reliability
-
-- Robust error handling and recovery
-- Graceful handling of network failures
-- Validation of inputs before processing
-- Backup and retry mechanisms for failed operations
-
-### Compatibility
-
-- Cross-platform support (Windows, macOS, Linux)
-- Support for various e-reader devices
-- Compatible with multiple email providers
-- Handle different web page structures and formats
-
-### Security
-
-- Secure storage of email credentials
-- Validation of all inputs to prevent security issues
-- Safe file handling and path sanitization
-- No transmission of sensitive data to third parties
-
-## Use Cases
-
-### 1. Single Article Reading
-
-User wants to read a blog post on their Kindle:
+## Installation
 
 ```bash
-easy-kindle send https://example.com/interesting-article
+# Clone the repository
+git clone git@github.com:affanmustafa/easy-kindle.git
+cd easy-kindle
+
+# Install dependencies
+bun install
+
+# Configure Easy-Kindle
+bun index.ts init
 ```
 
-### 2. Research Collection
+## Quick Start
 
-Student wants to save multiple research papers:
+### Initial Setup
+
+Run the setup wizard to configure your email and reading list:
 
 ```bash
-# Create file with URLs
-echo "https://arxiv.org/abs/2023.12345" > research-papers.txt
-echo "https://scholar.google.com/paper2" >> research-papers.txt
-
-# Send all papers as single e-book
-easy-kindle send research-papers.txt --title "AI Research 2023"
+bun index.ts init
 ```
 
-### 3. Daily News Digest
+You'll be asked for:
+- Your email address (sender)
+- Your Kindle/e-reader email address (receiver)
+- Path to store generated EPUBs
+- Email password (use App Password for Gmail)
+- SMTP server settings (auto-configured for Gmail)
+- Path to your reading list file (for sync feature)
 
-User wants to read daily news without distractions:
+### Basic Usage
 
+**Preview an article:**
 ```bash
-# Multiple news articles
-easy-kindle send https://news.site.com/article1 https://news.site.com/article2
+bun index.ts preview https://example.com/article
 ```
 
-### 4. Documentation Reading
-
-Developer wants to read technical documentation offline:
-
+**Generate EPUB locally:**
 ```bash
-# Save documentation locally for later
-easy-kindle download https://docs.example.com/api --output ./docs
+bun index.ts generate https://example.com/article
 ```
 
-### 5. Book Management
-
-User wants to organize their reading material:
-
+**Send to Kindle:**
 ```bash
-# Send existing book and new article together
-easy-kindle send existing-book.epub https://blog.example.com/new-post
+bun index.ts send https://example.com/article
 ```
 
-## Success Criteria
+## Commands
 
-### Functional Requirements
+### `preview`
+Preview extracted content without generating EPUB:
+```bash
+bun index.ts preview <url|file>
+```
 
-- ✅ Successfully convert 95% of tested web pages to readable EPUBs
-- ✅ Support all major e-reader email delivery services
-- ✅ Handle batch processing of 10+ URLs efficiently
-- ✅ Maintain consistent formatting across different content types
+### `generate`
+Generate EPUB files locally:
+```bash
+# Single URL
+bun index.ts generate https://example.com/article
 
-### Performance Requirements
+# Multiple URLs from file
+bun index.ts generate links.txt
 
-- ✅ Process single URLs within 30 seconds
-- ✅ Handle image-heavy pages without excessive memory usage
-- ✅ Send email attachments within 2 minutes under normal conditions
-- ✅ Start up and display help within 1 second
+# Combine into single EPUB
+bun index.ts generate links.txt --combine --title "My Collection"
 
-### Usability Requirements
+# Specify output directory
+bun index.ts generate links.txt -o ~/Downloads
+```
 
-- ✅ First-time users can complete setup within 5 minutes
-- ✅ Clear error messages guide users to solutions
-- ✅ Intuitive command structure requires minimal documentation
-- ✅ Works reliably without user intervention
+**Options:**
+- `-t, --title <title>` - Custom title for combined EPUB (implies --combine)
+- `-o, --output <dir>` - Output directory (default: current directory)
+- `-c, --combine` - Combine all articles into a single EPUB
 
-## Future Extensions
+### `send`
+Generate EPUBs and send to your Kindle:
+```bash
+# Send single article
+bun index.ts send https://example.com/article
 
-### Advanced Features
+# Send multiple articles (as separate EPUBs)
+bun index.ts send https://url1.com https://url2.com
 
-- **RSS Feed Integration**: Automatically process and deliver RSS feeds
-- **Scheduled Delivery**: Time-based sending of content
-- **Custom Templates**: User-defined e-book styling
-- **Cloud Storage**: Integration with cloud services
-- **Mobile App**: Companion mobile application
+# Combine multiple articles into one EPUB
+bun index.ts send links.txt --combine --title "Weekend Reading"
+```
 
-### Platform Integrations
+**Options:**
+- `-t, --title <title>` - Custom title for combined EPUB (implies --combine)
+- `-o, --output <dir>` - Directory to store generated EPUBs
+- `-c, --combine` - Combine all articles into a single EPUB
 
-- **Browser Extensions**: One-click sending from browser
-- **Web Interface**: Web-based configuration and management
-- **API Access**: RESTful API for third-party integrations
-- **Plugin System**: Extensible architecture for custom processors
+### `sync`
+Process new URLs from your configured reading list:
+```bash
+# Process unmarked URLs
+bun index.ts sync
 
-### Content Sources
+# Combine new URLs into one EPUB
+bun index.ts sync --combine
+```
 
-- **Social Media**: Convert Twitter threads, Reddit posts
-- **Academic Papers**: Specialized handling for research papers
-- **Newsletters**: Email newsletter processing
-- **Documentation Sites**: Multi-page documentation handling
+**How it works:**
+1. Reads your configured reading list file
+2. Finds URLs without ` - SENT` or ` - FAILED` markers
+3. Processes and sends them to your Kindle
+4. Marks successful URLs as ` - SENT`
+5. Marks failed URLs as ` - FAILED` (will retry next time)
 
-## Technical Constraints
+**Example reading list file:**
+```
+https://example.com/article1 - SENT
+https://example.com/article2
+https://example.com/article3 - FAILED
+https://example.com/article4
+```
 
-### Limitations
+Running `bun index.ts sync` will process articles 2, 3, and 4.
 
-- Requires internet connectivity for web content processing
-- Dependent on email provider's attachment size limits
-- Some paywalled content may not be accessible
-- Dynamic JavaScript-heavy content may have limited support
+### `init`
+Run the configuration wizard:
+```bash
+bun index.ts init
+```
 
-### Dependencies
+## Configuration
 
-- Internet access for content fetching
-- Email account with SMTP access
-- Sufficient disk space for temporary files
-- Command-line environment
+Configuration is stored in `~/.easy-kindle/config.json` with encrypted email password.
 
-This specification serves as the foundation for building Easy-Kindle, ensuring all core functionality is implemented while maintaining flexibility for future enhancements and platform-specific adaptations.
+**Config structure:**
+```json
+{
+  "sender": "your-email@gmail.com",
+  "receiver": "your-kindle@kindle.com",
+  "storePath": "/path/to/store/epubs",
+  "password": "encrypted-password",
+  "server": "smtp.gmail.com",
+  "port": 465,
+  "syncFilePath": "/path/to/reading-list.txt"
+}
+```
+
+## Email Provider Setup
+
+### Gmail
+1. Enable 2-factor authentication
+2. Generate an [App Password](https://myaccount.google.com/apppasswords)
+3. Use the App Password during `init`
+
+### Other Providers
+During `init`, you'll be prompted for:
+- SMTP server address (e.g., `smtp.office365.com`)
+- SMTP port (usually `465` for SSL or `587` for TLS)
+
+## File Format Support
+
+### Input
+- **URLs**: Direct web page links
+- **URL Files**: `.txt` or `.md` files with one URL per line
+- **E-books**: `.epub`, `.pdf`, `.mobi`, `.azw3`, `.txt`
+
+### Output
+- **EPUB**: Standards-compliant EPUB3 format with metadata and embedded images
+
+## Tips
+
+**For Gmail users:**
+- Use an App Password instead of your regular password
+- Add your Kindle email to approved senders in Amazon settings
+
+**For multiple articles:**
+- Default behavior: individual EPUBs per URL
+- Use `--combine` to merge into one book
+- Use `--title` to set a custom title (automatically combines)
+
+**For syncing:**
+- Manually mark URLs as ` - SENT` to skip them
+- Failed URLs are automatically retried on next sync
+- Both `.txt` and `.md` files work identically
+
+## Technical Details
+
+**Built with:**
+- **Bun**: JavaScript runtime and package manager
+- **Mozilla Readability**: Content extraction
+- **JSDOM**: DOM manipulation
+- **epub-gen**: EPUB generation
+- **Nodemailer**: Email delivery
+- **Commander**: CLI framework
+- **Chalk**: Terminal styling
+
+**Content Extraction:**
+- Uses Mozilla Readability for primary extraction
+- Fallback heuristics for non-standard pages
+- Handles lazy-loaded images (`srcset`, `data-src`)
+- Converts relative URLs to absolute
+- Preserves article structure and formatting
+
+**EPUB Features:**
+- Metadata (title, author, publisher)
+- Table of contents
+- Embedded images
+- Source URL and extraction date in each chapter
+- Clean, e-reader-optimized styling
+
+## Limitations
+
+- JavaScript-rendered pages may not extract well
+- Paywalled content requires manual login
+- Email attachment size limits apply (typically 25MB for most providers)
+- Some sites may block automated access
