@@ -3,6 +3,7 @@
 import { Command } from 'commander';
 import chalk from 'chalk';
 import { ConfigManager } from './src/config/config';
+import { classify } from './src/utils/classifier';
 
 const program = new Command();
 
@@ -18,15 +19,32 @@ program
 	.action(async (items: string[]) => {
 		try {
 			const config = await ConfigManager.getInstance().loadConfig();
-			console.log(chalk.green('Send command called with:'), items);
-			console.log(chalk.yellow('Loaded config:'), {
+
+			// Classify inputs
+			const requests = await classify(items);
+
+			console.log(chalk.green('📤 Send command processing:'));
+			console.log(chalk.yellow('Config loaded:'), {
 				sender: config.sender,
 				receiver: config.receiver,
 				storePath: config.storePath
 			});
-			// TODO: Implement send logic
+
+			if (requests.length === 0) {
+				console.log(chalk.yellow('No valid inputs found.'));
+				return;
+			}
+
+			console.log(chalk.cyan('\n📋 Classified inputs:'));
+			requests.forEach((req, index) => {
+				console.log(`${index + 1}. ${req.input} (${chalk.blue(req.type)})`);
+			});
+
+			// TODO: Implement actual send logic
+			console.log(chalk.yellow('\n⏳ Send logic not implemented yet.'));
+
 		} catch (error) {
-			console.error(chalk.red('Error loading config:'), error);
+			console.error(chalk.red('Error:'), error);
 		}
 	});
 
@@ -37,14 +55,28 @@ program
 	.action(async (items: string[]) => {
 		try {
 			const config = await ConfigManager.getInstance().loadConfig();
-			console.log(chalk.blue('Download command called with:'), items);
-			console.log(
-				chalk.yellow('Config loaded - will save to:'),
-				config.storePath
-			);
-			// TODO: Implement download logic
+
+			// Classify inputs
+			const requests = await classify(items);
+
+			console.log(chalk.blue('📥 Download command processing:'));
+			console.log(chalk.yellow('Config loaded - will save to:'), config.storePath);
+
+			if (requests.length === 0) {
+				console.log(chalk.yellow('No valid inputs found.'));
+				return;
+			}
+
+			console.log(chalk.cyan('\n📋 Classified inputs:'));
+			requests.forEach((req, index) => {
+				console.log(`${index + 1}. ${req.input} (${chalk.blue(req.type)})`);
+			});
+
+			// TODO: Implement actual download logic
+			console.log(chalk.yellow('\n⏳ Download logic not implemented yet.'));
+
 		} catch (error) {
-			console.error(chalk.red('Error loading config:'), error);
+			console.error(chalk.red('Error:'), error);
 		}
 	});
 

@@ -4,18 +4,6 @@
 
 Easy-Kindle is a command-line tool that enables users to send web articles, documents, and books to their e-reader devices (Kindle, Kobo, Remarkable, etc.) via email. The tool automatically converts web content into optimized e-book formats and delivers them directly to the user's device.
 
-## Core Purpose
-
-The primary goal is to solve the problem of reading web content on e-readers, which typically have limited web browsing capabilities. By converting online articles, blog posts, and documentation into e-book formats, users can enjoy a distraction-free reading experience on their preferred e-ink devices.
-
-## Target Users
-
-1. **Academic Readers** - Students and researchers who want to save research papers and articles
-2. **News Enthusiasts** - People who want to read news articles and blog posts offline
-3. **Documentation Readers** - Developers and professionals who want to read technical documentation
-4. **Book Lovers** - Anyone who wants to build a personal library of web content
-5. **Productivity Seekers** - Users who want to minimize distractions by reading on dedicated e-reading devices
-
 ## Core Features
 
 ### 1. Input Processing
