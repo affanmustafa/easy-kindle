@@ -1,4 +1,4 @@
-import { Readability } from '@mozilla/readability';
+import { Readability, isProbablyReaderable } from '@mozilla/readability';
 import JSDOM from 'jsdom';
 import chalk from 'chalk';
 
@@ -33,37 +33,33 @@ export async function extractWebpage(
 		}
 
 		const html = await response.text();
-		console.log(chalk.green(`✅ Fetched ${html.length} characters`));
-
 		const dom = new JSDOM.JSDOM(html, { url });
 		const document = dom.window.document;
 
+		const probablyReadable = isProbablyReaderable(document);
+		if (!probablyReadable) {
+			console.log(
+				chalk.yellow(
+					`⚠️ Sorry. This page may not be readable. 😢`
+				)
+			);
+		}
+
 		const reader = new Readability(document);
 		const result = reader.parse();
-
 		if (!result) {
-			console.log(
-				chalk.yellow(`⚠️  Could not extract readable content from ${url}`)
-			);
+			console.log(chalk.yellow(`⚠️ Readability failed on ${url}.`));
 			return null;
 		}
 
-		const tempDiv = document.createElement('div');
-		tempDiv.innerHTML = result.content || '';
-		const images = Array.from(tempDiv.querySelectorAll('img'))
-			.map((img: any) => img.src || img.dataset.src)
-			.filter((src): src is string => !!src);
+		const normalizedHtml = normalizeHtml(result.content || '', url);
+		const images = extractImageUrls(normalizedHtml, url);
 
-		console.log(
-			chalk.green(
-				`✅ Extracted: "${result.title}" (${result.length} chars, ${images.length} images)`
-			)
-		);
 
 		return {
 			url,
 			title: result.title || 'Untitled',
-			content: result.content || '',
+			content: normalizedHtml,
 			textContent: result.textContent || '',
 			length: result.length || 0,
 			excerpt: result.excerpt || '',
@@ -83,8 +79,6 @@ export async function extractWebpage(
 export async function extractWebpages(
 	urls: string[]
 ): Promise<ExtractedContent[]> {
-	console.log(chalk.cyan(`\n📚 Extracting ${urls.length} webpage(s)...`));
-
 	const batchSize = 3;
 	const results: ExtractedContent[] = [];
 
@@ -100,11 +94,126 @@ export async function extractWebpages(
 			}
 		}
 	}
-
-	console.log(
-		chalk.green(
-			`\n✅ Successfully extracted ${results.length}/${urls.length} webpages`
-		)
-	);
 	return results;
+}
+
+function normalizeHtml(html: string, baseUrl: string): string {
+	if (!html) return html;
+
+	const dom = new JSDOM.JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+		url: baseUrl
+	});
+	const doc = dom.window.document;
+	const container = doc.createElement('div');
+	container.innerHTML = html;
+
+	const imgs = container.querySelectorAll('img');
+	for (const img of Array.from(imgs)) {
+		const src = img.getAttribute('src');
+		if (src) {
+			try {
+				img.setAttribute('src', new URL(src, baseUrl).href);
+			} catch {}
+		}
+
+		const srcset = img.getAttribute('srcset');
+		if (srcset) {
+			const parts = srcset.split(',').map((part) => {
+				const [url, descriptor] = part.trim().split(/\s+/);
+				if (!url) return part;
+				try {
+					const absolute = new URL(url, baseUrl).href;
+					return descriptor ? `${absolute} ${descriptor}` : absolute;
+				} catch {
+					return part;
+				}
+			});
+			img.setAttribute('srcset', parts.join(', '));
+		}
+
+		const dataSrcAttrs = [
+			'data-src',
+			'data-original',
+			'data-lazy-src',
+			'data-image'
+		];
+		for (const attr of dataSrcAttrs) {
+			const dataSrc = img.getAttribute(attr);
+			if (dataSrc) {
+				try {
+					const absolute = new URL(dataSrc, baseUrl).href;
+					img.setAttribute(attr, absolute);
+					if (!img.getAttribute('src')) {
+						img.setAttribute('src', absolute);
+					}
+				} catch {}
+			}
+		}
+	}
+
+	const links = container.querySelectorAll('a');
+	for (const link of Array.from(links)) {
+		const href = link.getAttribute('href');
+		if (href) {
+			try {
+				link.setAttribute('href', new URL(href, baseUrl).href);
+			} catch {}
+		}
+	}
+
+	return container.innerHTML;
+}
+
+function extractImageUrls(html: string, baseUrl: string): string[] {
+	const dom = new JSDOM.JSDOM(`<!DOCTYPE html><html><body></body></html>`, {
+		url: baseUrl
+	});
+	const doc = dom.window.document;
+	const container = doc.createElement('div');
+	container.innerHTML = html;
+
+	const imageUrls = new Set<string>();
+	const imgs = container.querySelectorAll('img');
+
+	for (const img of Array.from(imgs)) {
+		const src = img.getAttribute('src');
+		if (src && isValidImageUrl(src)) {
+			imageUrls.add(src);
+		}
+
+		const srcset = img.getAttribute('srcset');
+		if (srcset) {
+			const urls = srcset.split(',').map((part) => part.trim().split(/\s+/)[0]);
+			for (const url of urls) {
+				if (url && isValidImageUrl(url)) {
+					imageUrls.add(url);
+				}
+			}
+		}
+
+		const dataSrcAttrs = [
+			'data-src',
+			'data-original',
+			'data-lazy-src',
+			'data-image'
+		];
+		for (const attr of dataSrcAttrs) {
+			const dataSrc = img.getAttribute(attr);
+			if (dataSrc && isValidImageUrl(dataSrc)) {
+				imageUrls.add(dataSrc);
+			}
+		}
+	}
+
+	return Array.from(imageUrls);
+}
+
+function isValidImageUrl(url: string): boolean {
+	if (!url || url.startsWith('data:')) return false;
+	try {
+		new URL(url);
+		return true;
+	} catch {
+		return false;
+	}
 }

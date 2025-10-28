@@ -13,6 +13,7 @@ export interface AppConfig {
 	password: string;
 	server: string;
 	port: number;
+	syncFilePath: string;
 }
 
 const CONFIG_FILE = join(homedir(), '.easy-kindle', 'config.json');
@@ -67,6 +68,9 @@ export class ConfigManager {
 			'Enter the path to store your e-books: '
 		);
 		const password = await this.askQuestion('Enter your email password: ');
+		const syncFilePath = await this.askQuestion(
+			'Enter path to your reading list file (txt/md): '
+		);
 
 		let server = 'smtp.gmail.com';
 		let port = 465;
@@ -87,7 +91,8 @@ export class ConfigManager {
 			storePath,
 			password: encryptedPass,
 			server,
-			port
+			port,
+			syncFilePath
 		};
 		await this.saveConfig();
 		console.log(chalk.green(`\nCONFIG CREATED AND SAVED TO ${CONFIG_FILE}`));

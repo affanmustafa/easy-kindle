@@ -17,9 +17,6 @@ export async function processRequests(
 
 	for (const request of requests) {
 		try {
-			console.log(
-				chalk.blue(`\n🔄 Processing: ${request.input} (${request.type})`)
-			);
 
 			switch (request.type) {
 				case 'url':

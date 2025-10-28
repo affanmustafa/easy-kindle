@@ -1,7 +1,4 @@
-import { writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
-import { homedir } from 'node:os';
-import slugify from 'slugify';
 import chalk from 'chalk';
 import Epub from 'epub-gen';
 import type { ExtractedContent } from './extractor.js';
@@ -46,14 +43,12 @@ export class EpubGenerator {
 		const metadata = `
       <div style="margin-bottom: 20px; padding: 10px; border-left: 3px solid #ccc; background-color: #f9f9f9;">
         <p style="margin: 0; font-size: 0.9em; color: #666;">
-          <strong>Source:</strong> <a href="${content.url}">${
-			content.url
-		}</a><br>
-          ${
-						content.byline
-							? `<strong>Author:</strong> ${content.byline}<br>`
-							: ''
-					}
+          <strong>Source:</strong> <a href="${content.url}">${content.url
+			}</a><br>
+          ${content.byline
+				? `<strong>Author:</strong> ${content.byline}<br>`
+				: ''
+			}
           <strong>Extracted:</strong> ${new Date().toLocaleDateString()}
         </p>
       </div>
@@ -98,17 +93,23 @@ export class EpubGenerator {
 			title = `${firstTitle} and ${contents.length - 1} more`;
 		}
 
-		const filename = slugify(title, { lower: true, strict: true }) + '.epub';
-		const filepath = join(this.options.outputDir!, filename);
+		const authors = contents
+			.map((c) => c.byline)
+			.filter((byline): byline is string => !!byline && byline.trim() !== '');
 
-		console.log(chalk.cyan(`\n📚 Generating EPUB: "${title}"`));
-		console.log(chalk.cyan(`📁 Output file: ${filepath}`));
-		console.log(chalk.cyan(`📖 Chapters: ${chapters.length}`));
+		const uniqueAuthors = Array.from(new Set(authors));
+		const authorString =
+			uniqueAuthors.length > 0
+				? uniqueAuthors.join(', ')
+				: 'Unknown';
+
+		const filename = title + '.epub';
+		const filepath = join(this.options.outputDir!, filename);
 
 		try {
 			const epubOptions = {
 				title,
-				author: this.options.author || 'Easy-Kindle',
+				author: this.options.author || authorString,
 				publisher: this.options.publisher || 'Easy-Kindle',
 				description:
 					this.options.description ||
@@ -122,7 +123,6 @@ export class EpubGenerator {
 				version: 3 as const
 			};
 
-			console.log(chalk.yellow('⏳ Generating EPUB file...'));
 			const epubInstance = new Epub(epubOptions, filepath);
 			await epubInstance.promise;
 
