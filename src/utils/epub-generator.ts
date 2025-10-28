@@ -1,7 +1,9 @@
 import { join } from 'node:path';
+import { unlink } from 'node:fs/promises';
 import chalk from 'chalk';
 import Epub from 'epub-gen';
 import type { ExtractedContent } from './extractor.js';
+import { generateTextCover } from './canvas.js';
 
 export interface EpubOptions {
 	title?: string;
@@ -107,6 +109,17 @@ export class EpubGenerator {
 		const filepath = join(this.options.outputDir!, filename);
 
 		try {
+			// Generate cover image
+			let coverPath: string | undefined;
+			try {
+				coverPath = await generateTextCover(
+					title,
+					this.options.author || authorString
+				);
+			} catch (error) {
+				console.warn(chalk.yellow('⚠️  Failed to generate cover, proceeding without it'));
+			}
+
 			const epubOptions = {
 				title,
 				author: this.options.author || authorString,
@@ -115,7 +128,7 @@ export class EpubGenerator {
 					this.options.description ||
 					`Collection of ${chapters.length} articles`,
 				language: this.options.language,
-				cover: undefined, // TODO: Add cover generation later
+				cover: coverPath,
 				content: chapters.map((chapter) => ({
 					title: chapter.title,
 					data: chapter.content
@@ -125,6 +138,15 @@ export class EpubGenerator {
 
 			const epubInstance = new Epub(epubOptions, filepath);
 			await epubInstance.promise;
+
+			// Clean up temporary cover file
+			if (coverPath) {
+				try {
+					await unlink(coverPath);
+				} catch (error) {
+					// Ignore cleanup errors
+				}
+			}
 
 			console.log(chalk.green(`✅ EPUB generated successfully: ${filepath}`));
 			return filepath;

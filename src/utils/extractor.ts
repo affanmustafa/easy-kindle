@@ -36,15 +36,6 @@ export async function extractWebpage(
 		const dom = new JSDOM.JSDOM(html, { url });
 		const document = dom.window.document;
 
-		const probablyReadable = isProbablyReaderable(document);
-		if (!probablyReadable) {
-			console.log(
-				chalk.yellow(
-					`⚠️ Sorry. This page may not be readable. 😢`
-				)
-			);
-		}
-
 		const reader = new Readability(document);
 		const result = reader.parse();
 		if (!result) {
