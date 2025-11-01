@@ -45,12 +45,14 @@ export class EpubGenerator {
 		const metadata = `
       <div style="margin-bottom: 20px; padding: 10px; border-left: 3px solid #ccc; background-color: #f9f9f9;">
         <p style="margin: 0; font-size: 0.9em; color: #666;">
-          <strong>Source:</strong> <a href="${content.url}">${content.url
-			}</a><br>
-          ${content.byline
-				? `<strong>Author:</strong> ${content.byline}<br>`
-				: ''
-			}
+          <strong>Source:</strong> <a href="${content.url}">${
+			content.url
+		}</a><br>
+          ${
+						content.byline
+							? `<strong>Author:</strong> ${content.byline}<br>`
+							: ''
+					}
           <strong>Extracted:</strong> ${new Date().toLocaleDateString()}
         </p>
       </div>
@@ -101,9 +103,7 @@ export class EpubGenerator {
 
 		const uniqueAuthors = Array.from(new Set(authors));
 		const authorString =
-			uniqueAuthors.length > 0
-				? uniqueAuthors.join(', ')
-				: 'Unknown';
+			uniqueAuthors.length > 0 ? uniqueAuthors.join(', ') : 'Unknown';
 
 		const filename = title + '.epub';
 		const filepath = join(this.options.outputDir!, filename);
@@ -117,7 +117,9 @@ export class EpubGenerator {
 					this.options.author || authorString
 				);
 			} catch (error) {
-				console.warn(chalk.yellow('⚠️  Failed to generate cover, proceeding without it'));
+				console.warn(
+					chalk.yellow('⚠️  Failed to generate cover, proceeding without it')
+				);
 			}
 
 			const epubOptions = {

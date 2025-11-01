@@ -8,7 +8,12 @@ import { processRequests } from './src/utils/handler';
 import { showAllPreviews } from './src/utils/preview';
 import { generateEpub } from './src/utils/epub-generator';
 import { sendMailWithAttachments } from './src/utils/mailer';
-import { parseUrlsFromFile, getUnprocessedUrls, markUrlInFile, showSyncStatus } from './src/utils/sync';
+import {
+	parseUrlsFromFile,
+	getUnprocessedUrls,
+	markUrlInFile,
+	showSyncStatus
+} from './src/utils/sync';
 import { existsSync } from 'node:fs';
 
 const program = new Command();
@@ -22,8 +27,15 @@ program
 	.command('send')
 	.description('Send files or URLs to your e-reader')
 	.argument('[items...]', 'files, URLs, or link files to send')
-	.option('-t, --title <title>', 'Custom title for combined EPUB (implies --combine)')
-	.option('-o, --output <dir>', 'Temp/output directory for generated EPUB', process.cwd())
+	.option(
+		'-t, --title <title>',
+		'Custom title for combined EPUB (implies --combine)'
+	)
+	.option(
+		'-o, --output <dir>',
+		'Temp/output directory for generated EPUB',
+		process.cwd()
+	)
 	.option('-c, --combine', 'Combine all articles into a single EPUB')
 	.action(async (items: string[], options) => {
 		try {
@@ -40,7 +52,8 @@ program
 			processedRequests.forEach((req, index) => {
 				if (req.extractedContent) {
 					console.log(
-						`${index + 1}. ✅ ${req.originalRequest.input}: ${req.extractedContent.length
+						`${index + 1}. ✅ ${req.originalRequest.input}: ${
+							req.extractedContent.length
 						} article(s) extracted`
 					);
 				}
@@ -99,11 +112,15 @@ program
 
 			await sendMailWithAttachments(
 				config,
-				attachments.length === 1 ? (attachments[0]?.filename || 'Document') : `${attachments.length} documents`,
+				attachments.length === 1
+					? attachments[0]?.filename || 'Document'
+					: `${attachments.length} documents`,
 				'Sent via Easy-Kindle',
 				attachments
 			);
-			console.log(chalk.green(`\n📬 Sent ${attachments.length} file(s) to your Kindle!`));
+			console.log(
+				chalk.green(`\n📬 Sent ${attachments.length} file(s) to your Kindle!`)
+			);
 		} catch (error) {
 			console.error(chalk.red('Error:'), error);
 		}
@@ -115,8 +132,6 @@ program
 	.argument('[items...]', 'files, URLs, or link files to download')
 	.action(async (items: string[]) => {
 		try {
-			const config = await ConfigManager.getInstance().loadConfig();
-
 			const requests = await classify(items);
 
 			if (requests.length === 0) {
@@ -136,7 +151,8 @@ program
 					);
 				} else if (req.extractedContent) {
 					console.log(
-						`${index + 1}. ✅ ${req.originalRequest.input}: ${req.extractedContent.length
+						`${index + 1}. ✅ ${req.originalRequest.input}: ${
+							req.extractedContent.length
 						} article(s) extracted`
 					);
 					req.extractedContent.forEach((content, i) => {
@@ -187,7 +203,10 @@ program
 	.command('generate')
 	.description('Generate EPUB from URLs or files (save locally)')
 	.argument('[items...]', 'files, URLs, or link files to convert to EPUB')
-	.option('-t, --title <title>', 'Custom title for combined EPUB (implies --combine)')
+	.option(
+		'-t, --title <title>',
+		'Custom title for combined EPUB (implies --combine)'
+	)
 	.option('-o, --output <dir>', 'Output directory', process.cwd())
 	.option('-c, --combine', 'Combine all articles into a single EPUB')
 	.action(async (items: string[], options) => {
@@ -243,7 +262,6 @@ program
 					)
 				);
 			}
-
 		} catch (error) {
 			console.error(chalk.red('Error:'), error);
 		}
@@ -259,7 +277,11 @@ program
 			const syncFilePath = config.syncFilePath;
 
 			if (!syncFilePath) {
-				console.log(chalk.red('❌ No sync file configured. Run `bun index.ts init` first.'));
+				console.log(
+					chalk.red(
+						'❌ No sync file configured. Run `bun index.ts init` first.'
+					)
+				);
 				return;
 			}
 
@@ -280,7 +302,9 @@ program
 				return;
 			}
 
-			console.log(chalk.cyan(`\n🚀 Processing ${unprocessed.length} new URL(s)...`));
+			console.log(
+				chalk.cyan(`\n🚀 Processing ${unprocessed.length} new URL(s)...`)
+			);
 
 			const urlsToProcess = unprocessed.map((p) => p.url);
 			const requests = await classify(urlsToProcess);
@@ -296,7 +320,12 @@ program
 			if (allContent.length === 0) {
 				console.log(chalk.yellow('\n⚠️  No content could be extracted.'));
 				for (const item of unprocessed) {
-					await markUrlInFile(syncFilePath, item.lineNumber, item.url, 'FAILED');
+					await markUrlInFile(
+						syncFilePath,
+						item.lineNumber,
+						item.url,
+						'FAILED'
+					);
 				}
 				return;
 			}
@@ -334,8 +363,15 @@ program
 							url: item.url
 						});
 					} catch (error) {
-						console.error(chalk.red(`❌ Failed to generate EPUB for: ${item.url}`));
-						await markUrlInFile(syncFilePath, item.lineNumber, item.url, 'FAILED');
+						console.error(
+							chalk.red(`❌ Failed to generate EPUB for: ${item.url}`)
+						);
+						await markUrlInFile(
+							syncFilePath,
+							item.lineNumber,
+							item.url,
+							'FAILED'
+						);
 					}
 				}
 			}
@@ -355,22 +391,36 @@ program
 					attachments.map((a) => ({ filename: a.filename, path: a.path }))
 				);
 
-				console.log(chalk.green(`\n✅ Sent ${attachments.length} file(s) to your Kindle!`));
+				console.log(
+					chalk.green(`\n✅ Sent ${attachments.length} file(s) to your Kindle!`)
+				);
 
 				for (const attachment of attachments) {
 					const item = unprocessed.find((u) => u.url === attachment.url);
 					if (item) {
-						await markUrlInFile(syncFilePath, item.lineNumber, item.url, 'SENT');
+						await markUrlInFile(
+							syncFilePath,
+							item.lineNumber,
+							item.url,
+							'SENT'
+						);
 					}
 				}
 
-				console.log(chalk.green(`\n📝 Marked ${attachments.length} URL(s) as SENT`));
+				console.log(
+					chalk.green(`\n📝 Marked ${attachments.length} URL(s) as SENT`)
+				);
 			} catch (error) {
 				console.error(chalk.red('❌ Failed to send email:'), error);
 				for (const attachment of attachments) {
 					const item = unprocessed.find((u) => u.url === attachment.url);
 					if (item) {
-						await markUrlInFile(syncFilePath, item.lineNumber, item.url, 'FAILED');
+						await markUrlInFile(
+							syncFilePath,
+							item.lineNumber,
+							item.url,
+							'FAILED'
+						);
 					}
 				}
 			}

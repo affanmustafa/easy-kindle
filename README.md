@@ -12,7 +12,24 @@ A command-line tool that converts web articles into EPUB files and sends them di
 - **Author Extraction**: Preserves article authors in EPUB metadata
 - **Flexible Output**: Generate individual EPUBs or combine multiple articles into one book
 
-## Installation
+## Global Installation
+
+```bash
+brew tap affanmustafa/easy-kindle
+brew install easy-kindle
+```
+
+## Usage
+
+```bash
+easy-kindle send https://example.com/article
+```
+
+```bash
+easy-kindle sync
+```
+
+## Development
 
 ```bash
 # Clone the repository
@@ -37,6 +54,7 @@ bun index.ts init
 ```
 
 You'll be asked for:
+
 - Your email address (sender)
 - Your Kindle/e-reader email address (receiver)
 - Path to store generated EPUBs
@@ -47,16 +65,19 @@ You'll be asked for:
 ### Basic Usage
 
 **Preview an article:**
+
 ```bash
 bun index.ts preview https://example.com/article
 ```
 
 **Generate EPUB locally:**
+
 ```bash
 bun index.ts generate https://example.com/article
 ```
 
 **Send to Kindle:**
+
 ```bash
 bun index.ts send https://example.com/article
 ```
@@ -64,13 +85,17 @@ bun index.ts send https://example.com/article
 ## Commands
 
 ### `preview`
+
 Preview extracted content without generating EPUB:
+
 ```bash
 bun index.ts preview <url|file>
 ```
 
 ### `generate`
+
 Generate EPUB files locally:
+
 ```bash
 # Single URL
 bun index.ts generate https://example.com/article
@@ -86,12 +111,15 @@ bun index.ts generate links.txt -o ~/Downloads
 ```
 
 **Options:**
+
 - `-t, --title <title>` - Custom title for combined EPUB (implies --combine)
 - `-o, --output <dir>` - Output directory (default: current directory)
 - `-c, --combine` - Combine all articles into a single EPUB
 
 ### `send`
+
 Generate EPUBs and send to your Kindle:
+
 ```bash
 # Send single article
 bun index.ts send https://example.com/article
@@ -104,12 +132,15 @@ bun index.ts send links.txt --combine --title "Weekend Reading"
 ```
 
 **Options:**
+
 - `-t, --title <title>` - Custom title for combined EPUB (implies --combine)
 - `-o, --output <dir>` - Directory to store generated EPUBs
 - `-c, --combine` - Combine all articles into a single EPUB
 
 ### `sync`
+
 Process new URLs from your configured reading list:
+
 ```bash
 # Process unmarked URLs
 bun index.ts sync
@@ -119,6 +150,7 @@ bun index.ts sync --combine
 ```
 
 **How it works:**
+
 1. Reads your configured reading list file
 2. Finds URLs without ` - SENT` or ` - FAILED` markers
 3. Processes and sends them to your Kindle
@@ -126,6 +158,7 @@ bun index.ts sync --combine
 5. Marks failed URLs as ` - FAILED` (will retry next time)
 
 **Example reading list file:**
+
 ```
 https://example.com/article1 - SENT
 https://example.com/article2
@@ -136,7 +169,9 @@ https://example.com/article4
 Running `bun index.ts sync` will process articles 2, 3, and 4.
 
 ### `init`
+
 Run the configuration wizard:
+
 ```bash
 bun index.ts init
 ```
@@ -146,52 +181,61 @@ bun index.ts init
 Configuration is stored in `~/.easy-kindle/config.json` with encrypted email password.
 
 **Config structure:**
+
 ```json
 {
-  "sender": "your-email@gmail.com",
-  "receiver": "your-kindle@kindle.com",
-  "storePath": "/path/to/store/epubs",
-  "password": "encrypted-password",
-  "server": "smtp.gmail.com",
-  "port": 465,
-  "syncFilePath": "/path/to/reading-list.txt"
+	"sender": "your-email@gmail.com",
+	"receiver": "your-kindle@kindle.com",
+	"storePath": "/path/to/store/epubs",
+	"password": "encrypted-password",
+	"server": "smtp.gmail.com",
+	"port": 465,
+	"syncFilePath": "/path/to/reading-list.txt"
 }
 ```
 
 ## Email Provider Setup
 
 ### Gmail
+
 1. Enable 2-factor authentication
 2. Generate an [App Password](https://myaccount.google.com/apppasswords)
 3. Use the App Password during `init`
 
 ### Other Providers
+
 During `init`, you'll be prompted for:
+
 - SMTP server address (e.g., `smtp.office365.com`)
 - SMTP port (usually `465` for SSL or `587` for TLS)
 
 ## File Format Support
 
 ### Input
+
 - **URLs**: Direct web page links
 - **URL Files**: `.txt` or `.md` files with one URL per line
 - **E-books**: `.epub`, `.pdf`, `.mobi`, `.azw3`, `.txt`
 
 ### Output
+
 - **EPUB**: Standards-compliant EPUB3 format with metadata and embedded images
 
 ## Tips
 
 **For Gmail users:**
+
 - Use an App Password instead of your regular password
 - Add your Kindle email to approved senders in Amazon settings
 
 **For multiple articles:**
+
 - Default behavior: individual EPUBs per URL
 - Use `--combine` to merge into one book
 - Use `--title` to set a custom title (automatically combines)
 
 **For syncing:**
+
 - Manually mark URLs as ` - SENT` to skip them
 - Failed URLs are automatically retried on next sync
 - Both `.txt` and `.md` files work identically
@@ -199,6 +243,7 @@ During `init`, you'll be prompted for:
 ## Technical Details
 
 **Built with:**
+
 - **Bun**: JavaScript runtime and package manager
 - **Mozilla Readability**: Content extraction
 - **JSDOM**: DOM manipulation
@@ -208,6 +253,7 @@ During `init`, you'll be prompted for:
 - **Chalk**: Terminal styling
 
 **Content Extraction:**
+
 - Uses Mozilla Readability for primary extraction
 - Fallback heuristics for non-standard pages
 - Handles lazy-loaded images (`srcset`, `data-src`)
@@ -215,6 +261,7 @@ During `init`, you'll be prompted for:
 - Preserves article structure and formatting
 
 **EPUB Features:**
+
 - Metadata (title, author, publisher)
 - Table of contents
 - Embedded images
