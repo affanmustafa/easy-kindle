@@ -120,6 +120,8 @@ bun index.ts generate links.txt -o ~/Downloads
 
 Generate EPUBs and send to your Kindle:
 
+If you have installed this via Brew, all these commands can be run with `easy-kindle` instead of `bun index.ts`.
+
 ```bash
 # Send single article
 bun index.ts send https://example.com/article

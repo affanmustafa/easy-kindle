@@ -15,6 +15,7 @@ import {
 	showSyncStatus
 } from './src/utils/sync';
 import { existsSync } from 'node:fs';
+import { unlink } from 'node:fs/promises';
 
 const program = new Command();
 
@@ -67,6 +68,7 @@ program
 			});
 
 			const attachments: { filename: string; path: string }[] = [];
+			const generatedEpubPaths: string[] = [];
 
 			if (allContent.length > 0) {
 				const shouldCombine = options.combine || options.title;
@@ -77,6 +79,7 @@ program
 						{ outputDir: options.output },
 						options.title
 					);
+					generatedEpubPaths.push(epubPath);
 					attachments.push({
 						filename: epubPath.split('/').pop()!,
 						path: epubPath
@@ -88,6 +91,7 @@ program
 							{ outputDir: options.output },
 							undefined
 						);
+						generatedEpubPaths.push(epubPath);
 						attachments.push({
 							filename: epubPath.split('/').pop()!,
 							path: epubPath
@@ -110,17 +114,25 @@ program
 				return;
 			}
 
-			await sendMailWithAttachments(
-				config,
-				attachments.length === 1
-					? attachments[0]?.filename || 'Document'
-					: `${attachments.length} documents`,
-				'Sent via Easy-Kindle',
-				attachments
-			);
-			console.log(
-				chalk.green(`\n📬 Sent ${attachments.length} file(s) to your Kindle!`)
-			);
+			try {
+				await sendMailWithAttachments(
+					config,
+					attachments.length === 1
+						? attachments[0]?.filename || 'Document'
+						: `${attachments.length} documents`,
+					'Sent via Easy-Kindle',
+					attachments
+				);
+				console.log(
+					chalk.green(`\n📬 Sent ${attachments.length} file(s) to your Kindle!`)
+				);
+			} finally {
+				for (const p of generatedEpubPaths) {
+					try {
+						await unlink(p);
+					} catch {}
+				}
+			}
 		} catch (error) {
 			console.error(chalk.red('Error:'), error);
 		}
@@ -331,6 +343,7 @@ program
 			}
 
 			const attachments: { filename: string; path: string; url: string }[] = [];
+			const generatedEpubPaths: string[] = [];
 
 			if (options.combine) {
 				const epubPath = await generateEpub(
@@ -338,6 +351,7 @@ program
 					{ outputDir: config.storePath },
 					`Reading List ${new Date().toLocaleDateString()}`
 				);
+				generatedEpubPaths.push(epubPath);
 				unprocessed.forEach((item) => {
 					attachments.push({
 						filename: epubPath.split('/').pop()!,
@@ -357,6 +371,7 @@ program
 							{ outputDir: config.storePath },
 							undefined
 						);
+						generatedEpubPaths.push(epubPath);
 						attachments.push({
 							filename: epubPath.split('/').pop()!,
 							path: epubPath,
@@ -392,7 +407,9 @@ program
 				);
 
 				console.log(
-					chalk.green(`\n✅ Sent ${attachments.length} file(s) to your Kindle!`)
+					chalk.green(
+						`\n✅ Sent ${attachments.length} file(s) to your e-Reader!`
+					)
 				);
 
 				for (const attachment of attachments) {
@@ -422,6 +439,12 @@ program
 							'FAILED'
 						);
 					}
+				}
+			} finally {
+				for (const p of generatedEpubPaths) {
+					try {
+						await unlink(p);
+					} catch {}
 				}
 			}
 		} catch (error) {
